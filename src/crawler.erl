@@ -3,4 +3,6 @@
 
 start(Collector, N) ->
     io:format("Crawler ~p started with collector: ~p~n", [N, Collector]),
-    Collector ! "Privet drug from crawler #" ++ [N] ++ "~n".
+    Collector ! {start, self(), N},
+    Collector ! {url, self(), "http://ya.ru/"},
+    Collector ! {process_end, self()}.
