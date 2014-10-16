@@ -1,19 +1,26 @@
 -module(collector).
--export([start/0]).
+-export([start/1]).
 
-start() ->
+-record(state, {pids, urls}).
+
+start(Urls) ->
     io:format("Collector started~n"),
-    loop(dict:new()).
+    loop(#state{
+      pids = dict:new(),
+      urls = dict:store(new, sets:from_list(Urls), dict:new())}
+    ).
 
-loop(Pids) ->
+loop(#state{pids = Pids, urls = Urls}) ->
     receive
         {start, Pid, N} ->
             io:format("Crawler #~p started with pid ~p~n", [N, Pid]),
-            loop(dict:store(Pid, N, Pids));
-        {url, Pid, Url} ->
+            loop(#state{pids = dict:store(Pid, N, Pids), urls = Urls});
+        {post_url, Pid, Url} ->
             io:format("Received url ~p from crawler ~p~n", [Url, dict:fetch(Pid, Pids)]),
-            loop(Pids);
+            loop(#state{pids = Pids, urls = erb_dict:append_to_set(new, Url, Urls)});
         {process_end, Pid} ->
             io:format("Crawler died ~p~n", [Pid]),
-            loop(dict:erase(Pid, Pids))
+            loop(#state{pids = dict:erase(Pid, Pids), urls = Urls})
     end.
+
+%%private
