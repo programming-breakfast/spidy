@@ -1,26 +1,41 @@
 -module(collector).
 -export([start/1]).
 
--record(state, {pids, urls}).
+-record(state, {urls}).
 
-start(Urls) ->
+start(StartUrls) ->
     io:format("Collector started~n"),
     loop(#state{
-      pids = dict:new(),
-      urls = dict:store(new, sets:from_list(Urls), dict:new())}
+      urls = dict:store(new, StartUrls, dict:new())}
     ).
 
-loop(#state{pids = Pids, urls = Urls}) ->
+loop(State = #state{urls = Urls}) ->
     receive
-        {start, Pid, N} ->
-            io:format("Crawler #~p started with pid ~p~n", [N, Pid]),
-            loop(#state{pids = dict:store(Pid, N, Pids), urls = Urls});
-        {post_url, Pid, Url} ->
-            io:format("Received url ~p from crawler ~p~n", [Url, dict:fetch(Pid, Pids)]),
-            loop(#state{pids = Pids, urls = erb_dict:append_to_set(new, Url, Urls)});
-        {process_end, Pid} ->
-            io:format("Crawler died ~p~n", [Pid]),
-            loop(#state{pids = dict:erase(Pid, Pids), urls = Urls})
+        {get_url, Pid} ->
+          case get_url_to_process(Urls) of
+            {ok, Url, NewUrls} ->
+		  Pid ! {process_url, Url},
+		  loop(#state{ urls = NewUrls });
+	    error ->
+		  Pid ! no_url
+          end;
+	{done_process, _Url, _Data} ->
+	    loop(State); 
+        {new_url, Pid, Url} ->
+            io:format("Received url ~p from crawler ~p~n", [Url, Pid]),
+            loop(#state{urls = dict:append(new, Url, Urls)});
+        {status} ->
+            io:format("State: ~nUrls: ~p~n", [Urls]),
+            loop(State);
+	_ -> ok
     end.
 
 %%private
+get_url_to_process(Urls) ->
+  case dict:find(new, Urls) of
+      {ok, [NewUrl|Rest]} -> 
+	Dict = dict:append(processing, NewUrl, dict:store(new, Rest, Urls)),
+	{ok, NewUrl, Dict};
+      _ ->
+	error
+  end.
