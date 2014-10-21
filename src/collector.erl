@@ -9,6 +9,7 @@ start(StartUrls) ->
       urls = dict:store(new, StartUrls, dict:new())}
     ).
 
+%% TODO check url for presence in any list
 loop(State = #state{urls = UrlStorage}) ->
     receive
       {get_url, Pid} ->
@@ -17,16 +18,18 @@ loop(State = #state{urls = UrlStorage}) ->
             Pid ! {process_url, Url},
             loop(#state{ urls = NewUrlStorage });
           error ->
-            Pid ! no_url
+            io:format("[no new urls] UrlStorage: ~p~n", [UrlStorage]),
+            Pid ! no_url,
+            loop(State)
         end;
-      {done_process, _Url, _Data} ->
-        loop(State);
+      {done_process, Url} ->
+        loop(#state{urls = move_url(Url, processing, complete, UrlStorage)});
       {new_url, Pid, Url} ->
-          io:format("Received url ~p from crawler ~p~n", [Url, Pid]),
-          loop(#state{urls = dict:append(new, Url, UrlStorage)});
+        io:format("Received url ~p from crawler ~p~n", [Url, Pid]),
+        loop(#state{urls = dict:append(new, Url, UrlStorage)});
       {status} ->
-          io:format("State: ~nUrls: ~p~n", [UrlStorage]),
-          loop(State);
+        io:format("State: ~nUrls: ~p~n", [UrlStorage]),
+        loop(State);
       _ -> ok
     end.
 
@@ -39,3 +42,11 @@ get_url_to_process(UrlStorage) ->
     _ ->
       error
   end.
+
+move_url(Url, From, To, UrlStorage) ->
+  {ok, FromUrls} = dict:find(From, UrlStorage),
+  {Url, NewFromUrls} = erb_lists:pop(Url, FromUrls),
+  DictWithNewFromUrls = dict:store(From, NewFromUrls, UrlStorage),
+  dict:append(To, Url, DictWithNewFromUrls).
+
+

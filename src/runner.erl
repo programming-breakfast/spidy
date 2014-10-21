@@ -1,7 +1,7 @@
 -module(runner).
 -export([run/0]).
 
--define(CRAWLERS_COUNT, 1).
+-define(CRAWLERS_COUNT, 2).
 
 run() ->
     io:format("Spidy starting~n"),

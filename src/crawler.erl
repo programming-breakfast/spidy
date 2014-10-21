@@ -14,13 +14,13 @@ loop(Collector) ->
   receive
     {process_url, Url} ->
       io:format("Receive new url: ~p~n", [Url]),
-      Data = process_url(Url),
-      Collector ! {done_process, Url, Data},
+      Collector ! {new_url, Url, process_url(Url)},
+      Collector ! {done_process, Url},
       loop(Collector);
-    no_url -> 
+    no_url ->
       timer:sleep(?SLEEP_TIME),
       loop(Collector);
     _ -> loop(Collector)
   end.
 
-process_url(_Url) -> ok.
+process_url(Url) -> Url ++ "/test".
