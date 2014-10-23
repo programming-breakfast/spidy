@@ -16,7 +16,7 @@ pop(Element, List) ->
   pop(Element, List, [], not_found).
 
 pop(_, [], _, not_found) -> error;
-pop(_, [], Accum, E) -> {E, Accum};
+pop(_, [], Accum, _) -> Accum;
 pop(Element, [Head|List], Accum, _) when Head == Element ->
   pop(Element, List, Accum, Head);
 pop(Element, [Head|List], Accum, E) ->

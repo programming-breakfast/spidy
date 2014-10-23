@@ -14,7 +14,7 @@ loop(Collector) ->
   receive
     {process_url, Url} ->
       io:format("Receive new url: ~p~n", [Url]),
-      Collector ! {new_url, Url, process_url(Url)},
+%%       Collector ! {new_url, Url, process_url(Url)},
       Collector ! {done_process, Url},
       loop(Collector);
     no_url ->
