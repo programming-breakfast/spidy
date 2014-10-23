@@ -24,11 +24,20 @@ loop(State = #state{url_storage = UrlStorage}) ->
             loop(State)
         end;
       {done_process, Url} ->
-        {Processing, Complete} = move_url(Url, UrlStorage#url_storage.processing, UrlStorage#url_storage.complete),
-        loop(#state{url_storage = UrlStorage#url_storage{processing = Processing, complete = Complete}});
+        {Processing, Complete} = move_url(
+          Url,
+          UrlStorage#url_storage.processing,
+          UrlStorage#url_storage.complete
+        ),
+        loop(#state{url_storage = UrlStorage#url_storage{
+          processing = Processing,
+          complete = Complete
+        }});
       {new_url, Pid, Url} ->
         io:format("Received url ~p from crawler ~p~n", [Url, Pid]),
-        loop(#state{url_storage = UrlStorage#url_storage{new = UrlStorage#url_storage.new ++ [Url]}});
+        loop(#state{url_storage = UrlStorage#url_storage{
+          new = UrlStorage#url_storage.new ++ [Url]
+        }});
       {status} ->
         io:format("State: ~nUrls: ~p~n", [UrlStorage]),
         loop(State);
