@@ -24,10 +24,11 @@ loop(State = #state{url_storage = UrlStorage}) ->
             loop(State)
         end;
       {done_process, Url} ->
-        loop(#state{url_storage = move_url(Url, processing, complete, UrlStorage)});
+        {Processing, Complete} = move_url(Url, UrlStorage#url_storage.processing, UrlStorage#url_storage.complete),
+        loop(#state{url_storage = UrlStorage#url_storage{processing = Processing, complete = Complete}});
       {new_url, Pid, Url} ->
         io:format("Received url ~p from crawler ~p~n", [Url, Pid]),
-        loop(#state{url_storage = dict:append(new, Url, UrlStorage)});
+        loop(#state{url_storage = UrlStorage#url_storage{new = UrlStorage#url_storage.new ++ [Url]}});
       {status} ->
         io:format("State: ~nUrls: ~p~n", [UrlStorage]),
         loop(State);
@@ -47,21 +48,5 @@ get_url_to_process(US = #url_storage{new = [NewUrl|Rest], processing = Processin
   }.
 
 
-move_url(Url, From, To, UrlStorage) ->
-  OldFrom = get_value(From, UrlStorage),
-  OldTo = get_value(To, UrlStorage),
-  UpdatedWithFromStorage = set_value(From, erb_lists:pop(Url, OldFrom), UrlStorage),
-  set_value(To, OldTo ++ [Url], UpdatedWithFromStorage).
+move_url(Url, From, To) -> {erb_lists:pop(Url, From), To ++ [Url]}.
 
-%% get value from record
-get_value(Key, Record) ->
-  element(key_index(Key), Record).
-
-set_value(Key, Value, Record) ->
-  setelement(key_index(Key), Record, Value).
-
-key_index(Key) ->
-  index(Key, record_info(fields, url_storage), 2).
-
-index(Key, [Key|_], I) -> I;
-index(Key, [_|T], I) -> index(Key, T, I + 1).
