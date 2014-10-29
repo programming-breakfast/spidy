@@ -1,7 +1,7 @@
 REBAR?=rebar
 
 compile:
-        $(REBAR) compile skip_deps=true
+	$(REBAR) compile skip_deps=true
 
 run: compile
-	erl -pa ebin -s runner run
+	ERL_LIBS=deps erl -pa ebin -s runner run
