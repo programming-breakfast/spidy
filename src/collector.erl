@@ -33,6 +33,16 @@ loop(State = #state{url_storage = UrlStorage}) ->
           processing = Processing,
           complete = Complete
         }});
+      {error_process, Url} ->
+        {Processing, Error} = move_url(
+          Url,
+          UrlStorage#url_storage.processing,
+          UrlStorage#url_storage.error
+        ),
+        loop(#state{url_storage = UrlStorage#url_storage{
+          processing = Processing,
+          error = Error
+        }});
       {new_url, Pid, Url} ->
         io:format("Received url ~p from crawler ~p~n", [Url, Pid]),
         loop(#state{url_storage = UrlStorage#url_storage{
