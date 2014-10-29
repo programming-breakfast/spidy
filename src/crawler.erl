@@ -14,7 +14,8 @@ loop(Collector) ->
   receive
     {process_url, Url} ->
       io:format("Receive new url: ~p~n", [Url]),
-      Collector ! {new_url, Url, process_url(Url)},
+      {ok, Body} = process_url(Url),
+      io:format("Parsed page: ~p~n", [Body]),
       Collector ! {done_process, Url},
       loop(Collector);
     no_url ->
@@ -23,4 +24,16 @@ loop(Collector) ->
     _ -> loop(Collector)
   end.
 
-process_url(Url) -> Url ++ "/test".
+process_url(Url) ->
+  Method = get,
+  Headers = [],
+  Payload = <<>>,
+  Options = [],
+  case hackney:request(Method, Url, Headers, Payload, Options) of
+    {ok, 200, _RespHeaders, ClientRef} ->
+      {ok, _Body} = hackney:body(ClientRef);
+    {ok, StatusCode, _RespHeaders, _ClientRef} ->
+      {error, "Unexpected status code " ++ integer_to_list(StatusCode)};
+    {error, Reason} ->
+      {error, Reason}
+  end.
