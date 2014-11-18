@@ -7,7 +7,7 @@ run() ->
     io:format("Spidy starting~n"),
     hackney:start(),
     Collector = spawn(collector, start, [
-      [<<"http://www.example.org/">>]
+      [<<"http://globalgroovers.blogspot.com">>]
     ]),
     start_crawlers(Collector),
     io:format("Spidy started~n").

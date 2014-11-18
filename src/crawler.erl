@@ -15,7 +15,7 @@ loop(Collector) ->
     {process_url, Url} ->
       io:format("Receive new url: ~p~n", [Url]),
       {ok, Body} = process_url(Url),
-      io:format("Parsed page: ~p~n", [Body]),
+      io:format("Parsed page: ~ts~n", [unicode:characters_to_list(Body, utf8)]),
       Collector ! {done_process, Url},
       loop(Collector);
     no_url ->
