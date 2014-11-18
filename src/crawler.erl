@@ -16,6 +16,7 @@ loop(Collector) ->
       io:format("Receive new url: ~p~n", [Url]),
       {ok, Body} = process_url(Url),
       io:format("Parsed page: ~ts~n", [unicode:characters_to_list(Body, utf8)]),
+      io:format("~p~n", [mochiweb_html:tokens(Body)]),
       Collector ! {done_process, Url},
       loop(Collector);
     no_url ->
