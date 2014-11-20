@@ -13,11 +13,7 @@ loop(Collector) ->
   Collector ! {get_url, self()},
   receive
     {process_url, Url} ->
-      io:format("Receive new url: ~p~n", [Url]),
-      {ok, Body} = process_url(Url),
-      io:format("Parsed page: ~ts~n", [unicode:characters_to_list(Body, utf8)]),
-      io:format("~p~n", [mochiweb_html:tokens(Body)]),
-      Collector ! {done_process, Url},
+      process_url(Url, Collector),
       loop(Collector);
     no_url ->
       timer:sleep(?SLEEP_TIME),
@@ -25,16 +21,21 @@ loop(Collector) ->
     _ -> loop(Collector)
   end.
 
-process_url(Url) ->
+process_url(Url, Collector) ->
   Method = get,
   Headers = [],
   Payload = <<>>,
   Options = [],
   case hackney:request(Method, Url, Headers, Payload, Options) of
     {ok, 200, _RespHeaders, ClientRef} ->
-      {ok, _Body} = hackney:body(ClientRef);
+      {ok, Body} = hackney:body(ClientRef),
+      case parser:parse(Body) of
+        ok -> Collector ! {done_process, Url};
+        error -> Collector ! {error_process, Url}
+      end;
     {ok, StatusCode, _RespHeaders, _ClientRef} ->
-      {error, "Unexpected status code " ++ integer_to_list(StatusCode)};
+      {error, "Unexpected status code " ++ integer_to_list(StatusCode)},
+      Collector ! {error_process, Url};
     {error, Reason} ->
-      {error, Reason}
+      Collector ! {error_process, Url}
   end.
