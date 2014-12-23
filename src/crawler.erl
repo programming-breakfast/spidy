@@ -29,13 +29,11 @@ process_url(Url, Collector) ->
   case hackney:request(Method, Url, Headers, Payload, Options) of
     {ok, 200, _RespHeaders, ClientRef} ->
       {ok, Body} = hackney:body(ClientRef),
-      case parser:parse(Body) of
-        ok -> Collector ! {done_process, Url};
-        error -> Collector ! {error_process, Url}
-      end;
+      parse_server:process(Body);
     {ok, StatusCode, _RespHeaders, _ClientRef} ->
-      {error, "Unexpected status code " ++ integer_to_list(StatusCode)},
+      io:format("~p got ~p while processing ~p", [?MODULE, StatusCode, Url]),
       Collector ! {error_process, Url};
-    {error, Reason} ->
+    {error, _Reason} ->
+      io:format("~p got unknown error", [?MODULE]),
       Collector ! {error_process, Url}
   end.

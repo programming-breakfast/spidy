@@ -6,7 +6,9 @@
 run() ->
     io:format("Spidy starting~n"),
     hackney:start(),
+    io:format("~p~n", [parse_server:start_link()]),
     Collector = spawn(collector, start, [
+    %% Get some real persistant storage here
       [<<"http://globalgroovers.blogspot.com">>]
     ]),
     start_crawlers(Collector),

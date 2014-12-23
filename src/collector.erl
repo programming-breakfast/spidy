@@ -19,7 +19,6 @@ loop(State = #state{url_storage = UrlStorage}) ->
             Pid ! {process_url, Url},
             loop(#state{ url_storage = NewUrlStorage });
           error ->
-            io:format("[no new urls] UrlStorage: ~p~n", [UrlStorage]),
             Pid ! no_url,
             loop(State)
         end;
